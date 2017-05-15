@@ -12,7 +12,7 @@ class Puzzle(object):
 
     # selects which cell to fill next
     def selectVariable(self):
-        return self.empty[ randint(0, len(self.empty)) ]
+        return self.empty.pop( randint(0, len(self.empty)) )
 
     # checks if entire puzzle is filled out
     def isComplete(self):
@@ -25,20 +25,17 @@ class Puzzle(object):
         # TODO: check alldiff of each block
         return False
 
+puzzle = Puzzle()
 
 # parse command line arguments
 inputFile = "easy.txt"
 if len(sys.argv) > 1:
     inputFile = sys.argv[1] + ".txt"
 
-puzzle = Puzzle()
-
 # read input from file to list
 sudokuInput = open(inputFile)
 for line in sudokuInput:
     puzzle.assignments.append(line.rstrip().split(','))
-
-domain = {1,2,3,4,5,6,7,8,9}
 
 r = 0
 for row in puzzle.assignments:
@@ -53,6 +50,8 @@ for row in puzzle.assignments:
 
 print puzzle.empty
 print puzzle.selectVariable()
+print puzzle.empty
+
 
 def backtrackingSearch(puzzle):
     if puzzle.isComplete():
