@@ -10,16 +10,16 @@ class Puzzle(object):
         self.empty = []
         self.domain = {1,2,3,4,5,6,7,8,9}
 
+    # selects which cell to fill next
     def selectVariable(self):
-        return empty[ randint(0, len(empty)) ]
+        return self.empty[ randint(0, len(self.empty)) ]
 
+    # checks if entire puzzle is filled out
     def isComplete(self):
-        # checks if entire puzzle is filled out
-        # TODO: search for empty string
-        return True
+        return len(self.empty) == 0
 
+    # check if given value follows restraints
     def isConsistent(self, value):
-        # check if given value follows restraints
         # TODO: check alldiff of each row
         # TODO: check alldiff of each col
         # TODO: check alldiff of each block
@@ -52,20 +52,21 @@ for row in puzzle.assignments:
     r += 1
 
 print puzzle.empty
+print puzzle.selectVariable()
 
-# def backtrackingSearch(puzzle):
-#     if puzzle.isComplete():
-#         return puzzle
-#     var = puzzle.selectVariable()
-#
-#     for value in domainValues():
-#         if puzzle.isConsistent(value):
-#             puzzle[x][y] = value
-#
-#             result = backtrackingSearch(puzzle)
-#
-#             if result != False:
-#                 return result
-#
-#             puzzle[x][y] = ''
-#     return False
+def backtrackingSearch(puzzle):
+    if puzzle.isComplete():
+        return puzzle
+    var = puzzle.selectVariable()
+
+    for value in domainValues():
+        if puzzle.isConsistent(value):
+            puzzle[x][y] = value
+
+            result = backtrackingSearch(puzzle)
+
+            if result != False:
+                return result
+
+            puzzle[x][y] = ''
+    return False
