@@ -10,6 +10,26 @@ class Puzzle(object):
         self.empty = []
         self.domain = {1,2,3,4,5,6,7,8,9}
 
+    def fill(self, inputPuzzle):
+        for line in inputPuzzle:
+            puzzle.assignments.append(line.rstrip().split(','))
+
+        r = 0
+        for row in self.assignments:
+            c = 0
+            for value in row:
+                if value == '':
+                    cellCoords = (r, c) # (r, c) are the coordinates of the current cell
+                    self.empty.append(cellCoords)
+                else:
+                    self.setCell((r, c), int(value)) # convert values to ints
+                c += 1
+            r += 1
+
+        # fill grid of remaining possible values for forward checking
+        # self.remaining = []
+        # for
+
     def display(self):
         print("   0 1 2 3 4 5 6 7 8\n")
 
@@ -126,21 +146,8 @@ if len(sys.argv) > 1:
     inputFile = sys.argv[1] + ".txt"
 
 # read input from file to list
-sudokuInput = open(inputFile)
-for line in sudokuInput:
-    puzzle.assignments.append(line.rstrip().split(','))
-
-r = 0
-for row in puzzle.assignments:
-    c = 0
-    for value in row:
-        if value == '':
-            cellCoords = (r, c) # (r, c) are the coordinates of the current cell
-            puzzle.empty.append(cellCoords)
-        else:
-            puzzle.setCell((r, c), int(value)) # convert values to ints
-        c += 1
-    r += 1
+inputPuzzle = open(inputFile)
+puzzle.fill( inputPuzzle )
 
 # main
 puzzle.display()
