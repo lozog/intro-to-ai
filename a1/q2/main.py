@@ -15,30 +15,28 @@ class Puzzle(object):
 
         i = 0
         for row in self.assignments:
-            print (i,' ', end='')
+            print(i,' ', end='')
             i += 1
             for value in row:
                 if value == '':
-                    print ('_ ', end='')
+                    print('_ ', end='')
                 else:
-                    print (str(value)+' ', end='')
+                    print(str(value)+' ', end='')
+            # for
             print('\n', end='')
+        # for
 
     def setCell(self, cell, value):
         self.assignments[cell[0]][cell[1]] = value
         if value == '':
-            # print("clearing cell:", str(cell))
             self.empty.append(cell)
 
     # selects which cell to fill next
     def selectVariable(self):
-        # return (0,0)
         numEmpty = len(self.empty)
-        # print ("numEmpty: " + str(numEmpty))
-        # return self.empty.pop( randint(0, numEmpty) )
         selectedCell = self.empty.pop()
-        # print ("popping:", str(selectedCell))
         return selectedCell
+        # return self.empty.pop( randint(0, numEmpty) )
 
     # checks if entire puzzle is filled out
     def isComplete(self):
@@ -48,34 +46,25 @@ class Puzzle(object):
     def isConsistent(self, selectedCell, value):
         x = selectedCell[0]
         y = selectedCell[1]
-        # print ("selected cell:", int(x), int(y))
         self.assignments[x][y] = value
-
-        # if selectedCell == (8,5):
-            # print ("(8,5) value: ", value)
 
         # check alldiff of each row
         for r in range(9):
             row = [i for i in self.assignments[r] if i != ''] # get # of values in row - ignore empty spaces, they have no impact on consistency
             rowSet = set(row) # get # of unique values in row
             if len(row) != len(rowSet):
-                # print (row)
-                # print (rowSet)
-                # print ("row overwrite:", int(x), int(y))
                 self.assignments[x][y] = ''
                 return False
+        # for
 
         # check alldiff of each column
         for c in range(9):
             col = [row[c] for row in self.assignments if row[c] != '']
             colSet = set(col)
             if len(col) != len(colSet):
-                # print (col)
-                # print (colSet)
-                # print ("col overwrite:", int(x), int(y))
                 self.assignments[x][y] = ''
                 return False
-
+        # for
 
         # check alldiff of each block
         # (blockX, blockY) is the top-left most cell of each block
@@ -89,16 +78,18 @@ class Puzzle(object):
                         value = self.assignments[blockX + i][blockY + j]
                         if value != '':
                             block.append( value )
+                    # for
+                # for
 
                 blockSet = set(block)
                 if len(block) != len(blockSet):
-                    # print (block)
-                    # print (blockSet)
-                    # print ("block overwrite:", int(x), int(y))
                     self.assignments[x][y] = ''
                     return False
+            # for
+        # for
 
         return True
+#************************* class Puzzle **********************************************
 
 def backtrackingSearch(puzzle):
     if puzzle.isComplete():
@@ -106,15 +97,15 @@ def backtrackingSearch(puzzle):
 
     selectedCell = puzzle.selectVariable()
 
-    # print ("cell: ", end='')
-    # print (selectedCell)
+    # print("cell: ", end='')
+    # print(selectedCell)
 
     for value in puzzle.domain:
-        # print ("checking value: " + str(value))
+        # print("checking value: " + str(value))
         if puzzle.isConsistent(selectedCell, value):
 
             # puzzle.display()
-            # print (puzzle.empty)
+            # print(puzzle.empty)
 
             puzzle.setCell(selectedCell, value)
 
@@ -123,12 +114,9 @@ def backtrackingSearch(puzzle):
             if result != False:
                 return result
 
-            # print ('damn, we fucked up somewhere. currentval: ', str(value))
-            # puzzle.setCell(selectedCell, '')
-            # puzzle.display()
-            # print (puzzle.empty)
     puzzle.setCell(selectedCell, '')
     return False
+#************************* def backtrackingSearch **********************************************
 
 puzzle = Puzzle()
 
@@ -156,10 +144,10 @@ for row in puzzle.assignments:
 
 # main
 puzzle.display()
-print('\n')
 completedPuzzle = backtrackingSearch( puzzle )
 
-if completedPuzzle != False:
+if completedPuzzle:
+    print("\ndone!\n")
     completedPuzzle.display()
 else:
-    print ("could not complete puzzle")
+    print("Couldn't solve puzzle :(")
