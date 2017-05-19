@@ -212,10 +212,9 @@ class Puzzle(object):
         return True
 #************************* class Puzzle **********************************************
 
-def backtrackingSearch(puzzle):
+def backtrackingSearch(puzzle, numNodes):
     if puzzle.isComplete():
         return puzzle
-
 
     selectedCell = puzzle.selectVariable()
 
@@ -230,6 +229,9 @@ def backtrackingSearch(puzzle):
 
     for value in possibleValues:
         # print("checking value: " + str(value))
+        numNodes[0] += 1
+        # print(numNodes)
+
         if puzzle.isConsistent(selectedCell, value):
 
             # puzzle.display()
@@ -237,7 +239,7 @@ def backtrackingSearch(puzzle):
 
             puzzle.setCell(selectedCell, value)
 
-            result = backtrackingSearch( puzzle )
+            result = backtrackingSearch( puzzle, numNodes )
 
             if result != False:
                 return result
@@ -278,11 +280,12 @@ if puzzle.mode == 1:
     puzzle.displayRemaining()
     print('')
 puzzle.display()
-print(puzzle.empty)
+# print(puzzle.empty)
 
 # puzzle.addToRemaining()
 
-completedPuzzle = backtrackingSearch( puzzle )
+numNodes = [0] # wrap int in a container so it gets mutated by the recursive calls to backtrackingSearch()
+completedPuzzle = backtrackingSearch( puzzle, numNodes )
 
 if completedPuzzle:
     print("\ndone!\n")
@@ -290,4 +293,6 @@ if completedPuzzle:
 else:
     print("Couldn't solve puzzle :(")
 
+print('')
 print("elapsed time: %s seconds" % (time.time() - startTime))
+print("%d nodes expanded" % numNodes[0])
