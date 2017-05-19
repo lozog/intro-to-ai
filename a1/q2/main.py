@@ -2,7 +2,7 @@
 
 import sys
 import time
-from math import floor
+from math import floor, sqrt, pow
 from copy import deepcopy
 from random import randint, shuffle
 
@@ -260,12 +260,6 @@ if len(sys.argv) > 1:
 if len(sys.argv) > 2:
     inputFile = sys.argv[2] + ".txt"
 
-puzzle = Puzzle(mode)
-
-# read input from file to list
-inputPuzzle = open(inputFile)
-puzzle.fill( inputPuzzle )
-
 # main
 
 # checks puzzle.remaining against puzzle.assignments
@@ -276,23 +270,56 @@ puzzle.fill( inputPuzzle )
 #         else:
 #             print('good')
 
-if puzzle.mode == 1:
-    puzzle.displayRemaining()
-    print('')
-puzzle.display()
-# print(puzzle.empty)
+################# run the puzzles within a time limit #################
 
-# puzzle.addToRemaining()
+timeLimit = 1000
+results = []
 
-numNodes = [0] # wrap int in a container so it gets mutated by the recursive calls to backtrackingSearch()
-completedPuzzle = backtrackingSearch( puzzle, numNodes )
+while (time.time() - startTime < timeLimit):
 
-if completedPuzzle:
-    print("\ndone!\n")
-    completedPuzzle.display()
-else:
-    print("Couldn't solve puzzle :(")
+    puzzle = Puzzle(mode)
 
-print('')
-print("elapsed time: %s seconds" % (time.time() - startTime))
-print("%d nodes expanded" % numNodes[0])
+    # read input from file to list
+    inputPuzzle = open(inputFile)
+    puzzle.fill( inputPuzzle )
+
+    puzzleStartTime = time.time()
+    numNodes = [0] # wrap int in a container so it gets mutated by the recursive calls to backtrackingSearch()
+    completedPuzzle = backtrackingSearch( puzzle, numNodes )
+
+    if completedPuzzle:
+        results.append( (time.time()-puzzleStartTime, numNodes[0]) )
+    else:
+        print("ERROR! could not complete puzzle.")
+        completedPuzzle.display()
+
+###################################################################
+
+################# analyze results #################
+
+# calculate sums of time & # of nodes
+timeSum = 0
+nodeSum = 0
+for result in results:
+    print(result)
+    timeSum += result[0]
+    nodeSum += result[1]
+
+# calculate means
+timeMean = timeSum / len(results)
+nodeMean = nodeSum / len(results)
+print("time mean: %f, node mean: %f" % (timeMean, nodeMean))
+
+# calculate variance sums
+timeVar = 0
+nodeVar = 0
+for result in results:
+    timeVar += pow(result[0] - timeMean, 2)
+    nodeVar += pow(result[1] - nodeMean, 2)
+
+# calculate standard deviations
+timeSD = sqrt(timeVar / len(results))
+nodeSD = sqrt(nodeVar / len(results))
+print("time sd: %f, node sd: %f" % (timeSD, nodeSD))
+
+###################################################
