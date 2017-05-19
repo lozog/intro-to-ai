@@ -1,24 +1,25 @@
-# usage: python main.py <forwardCheck> <inputfile>
+# usage: python main.py <mode> <inputfile>
 
 import sys
+import time
 from math import floor
 from copy import deepcopy
-from random import randint
+from random import randint, shuffle
 
 class Puzzle(object):
 
-    def __init__(self, forwardCheck):
+    def __init__(self, mode):
         self.assignments = []
         self.empty = []
         self.domain = {1,2,3,4,5,6,7,8,9}
         self.remaining = []
-        self.forwardCheck = forwardCheck
+        self.mode = mode
 
     def fill(self, inputPuzzle):
         for line in inputPuzzle:
             self.assignments.append(line.rstrip().split(','))
 
-        if puzzle.forwardCheck:
+        if puzzle.mode != 0:
             # fill grid of remaining possible values for forward checking
             for r in range(9):
                 self.remaining.append([])
@@ -36,12 +37,15 @@ class Puzzle(object):
                     self.empty.append(cellCoords)
                 else:
                     self.setCell((r, c), int(value)) # convert values to ints
-                    if self.forwardCheck:
+                    if self.mode != 0:
                         self.removeFromRemaining((r, c), int(value))
                 c += 1
             # for
             r += 1
         # for
+
+        # after filling empty list, randomize order of variables
+        shuffle(self.empty)
 
     def removeFromRemaining(self, selectedCell, value):
         r = selectedCell[0]
@@ -66,6 +70,38 @@ class Puzzle(object):
         for i in range(3):
             for j in range(3):
                 self.remaining[blockX + i][blockY + j] = [x for x in self.remaining[blockX + i][blockY + j] if x != value]
+            # for
+        # for
+
+    def addToRemaining(self, selectedCell, value):
+        r = selectedCell[0]
+        c = selectedCell[1]
+
+        for i in range(9):
+            # print(self.remaining[r][i])
+            if value not in self.remaining[r][i]:
+                self.remaining[r][i].append(value)
+            # self.remaining[r][i] = [x for x in self.remaining[r][i] if x != value]
+            # print(self.remaining[r][i])
+            if value not in self.remaining[i][c]:
+                self.remaining[i][c].append(value)
+            # self.remaining[i][c] = [x for x in self.remaining[i][c] if x != value]
+        # for
+
+        # remove all possible values from selectedCell
+        # self.remaining[r][c] = []
+
+        # remove as possible value for entire block
+
+        # find top-left cell of block
+        blockX = floor(r/3)*3
+        blockY = floor(c/3)*3
+
+        for i in range(3):
+            for j in range(3):
+                if value not in self.remaining[blockX + i][blockY + j]:
+                    self.remaining[blockX + i][blockY + j].append(value)
+                # self.remaining[blockX + i][blockY + j] = [x for x in self.remaining[blockX + i][blockY + j] if x != value]
             # for
         # for
 
@@ -105,13 +141,23 @@ class Puzzle(object):
         self.assignments[cell[0]][cell[1]] = value
         if value == '':
             self.empty.append(cell)
+            if self.mode != 0:
+                self.addToRemaining(cell, value)
+        else:
+            if self.mode != 0:
+                self.removeFromRemaining(cell, value)
+        if self.mode != 0:
+            self.displayRemaining()
 
     # selects which cell to fill next
     def selectVariable(self):
-        numEmpty = len(self.empty)
+        # empty list has already been shuffled
         selectedCell = self.empty.pop()
         return selectedCell
-        # return self.empty.pop( randint(0, numEmpty) )
+        # numEmpty = len(self.empty)
+        # randIdx = randint(0, numEmpty-1)
+        # print(numEmpty, randIdx)
+        # return self.empty.pop( randIdx )
 
     # checks if entire puzzle is filled out
     def isComplete(self):
@@ -170,12 +216,19 @@ def backtrackingSearch(puzzle):
     if puzzle.isComplete():
         return puzzle
 
+
     selectedCell = puzzle.selectVariable()
 
     # print("cell: ", end='')
     # print(selectedCell)
 
+    possibleValues = []
     for value in puzzle.domain:
+        possibleValues.append(value)
+    shuffle(possibleValues)
+    # print(possibleValues)
+
+    for value in possibleValues:
         # print("checking value: " + str(value))
         if puzzle.isConsistent(selectedCell, value):
 
@@ -193,17 +246,19 @@ def backtrackingSearch(puzzle):
     return False
 #************************* def backtrackingSearch **********************************************
 
+startTime = time.time()
+
 # default arguments
-forwardCheck = False
+mode = 0
 inputFile = "easy.txt"
 
 # parse command line arguments
 if len(sys.argv) > 1:
-    forwardCheck = sys.argv[1]
+    mode = sys.argv[1]
 if len(sys.argv) > 2:
     inputFile = sys.argv[2] + ".txt"
 
-puzzle = Puzzle(forwardCheck)
+puzzle = Puzzle(mode)
 
 # read input from file to list
 inputPuzzle = open(inputFile)
@@ -219,10 +274,14 @@ puzzle.fill( inputPuzzle )
 #         else:
 #             print('good')
 
-if puzzle.forwardCheck:
+if puzzle.mode == 1:
     puzzle.displayRemaining()
     print('')
 puzzle.display()
+print(puzzle.empty)
+
+# puzzle.addToRemaining()
+
 completedPuzzle = backtrackingSearch( puzzle )
 
 if completedPuzzle:
@@ -230,3 +289,5 @@ if completedPuzzle:
     completedPuzzle.display()
 else:
     print("Couldn't solve puzzle :(")
+
+print("elapsed time: %s seconds" % (time.time() - startTime))
