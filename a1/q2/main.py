@@ -212,9 +212,13 @@ class Puzzle(object):
         return True
 #************************* class Puzzle **********************************************
 
-def backtrackingSearch(puzzle, numNodes):
+def backtrackingSearch(puzzle, numNodes, timeLimit, startTime):
     if puzzle.isComplete():
         return puzzle
+
+    # break if exceeding time limit
+    if time.time() - startTime > timeLimit:
+        return
 
     selectedCell = puzzle.selectVariable()
 
@@ -230,7 +234,7 @@ def backtrackingSearch(puzzle, numNodes):
     for value in possibleValues:
         # print("checking value: " + str(value))
         numNodes[0] += 1
-        # print(numNodes)
+        # print(numNodes[0])
 
         if puzzle.isConsistent(selectedCell, value):
 
@@ -239,7 +243,7 @@ def backtrackingSearch(puzzle, numNodes):
 
             puzzle.setCell(selectedCell, value)
 
-            result = backtrackingSearch( puzzle, numNodes )
+            result = backtrackingSearch( puzzle, numNodes, timeLimit, startTime )
 
             if result != False:
                 return result
@@ -256,7 +260,7 @@ inputFile = "easy.txt"
 
 # parse command line arguments
 if len(sys.argv) > 1:
-    mode = sys.argv[1]
+    mode = int(sys.argv[1])
 if len(sys.argv) > 2:
     inputFile = sys.argv[2] + ".txt"
 
@@ -285,23 +289,27 @@ while (time.time() - startTime < timeLimit):
 
     puzzleStartTime = time.time()
     numNodes = [0] # wrap int in a container so it gets mutated by the recursive calls to backtrackingSearch()
-    completedPuzzle = backtrackingSearch( puzzle, numNodes )
+    completedPuzzle = backtrackingSearch( puzzle, numNodes, timeLimit, startTime )
 
     if completedPuzzle:
         results.append( (time.time()-puzzleStartTime, numNodes[0]) )
     else:
-        print("ERROR! could not complete puzzle.")
-        completedPuzzle.display()
+        print("ERROR! could not complete puzzle within time limit.")
+        # completedPuzzle.display()
+
+    break
 
 ###################################################################
 
 ################# analyze results #################
 
+if len(results) == 0:
+    exit()
+
 # calculate sums of time & # of nodes
 timeSum = 0
 nodeSum = 0
 for result in results:
-    print(result)
     timeSum += result[0]
     nodeSum += result[1]
 
@@ -321,5 +329,9 @@ for result in results:
 timeSD = sqrt(timeVar / len(results))
 nodeSD = sqrt(nodeVar / len(results))
 print("time sd: %f, node sd: %f" % (timeSD, nodeSD))
+
+print('\n')
+for result in results:
+    print(result)
 
 ###################################################
