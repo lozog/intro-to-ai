@@ -12,21 +12,29 @@ class Puzzle(object):
         self.assignments = []
         self.empty = []
         self.domain = {1,2,3,4,5,6,7,8,9}
-        self.remaining = []
         self.mode = mode
+
+        # forward checking variables
+        # each list stores the values already used for each row, column, or block
+        self.rowUsed = []
+        self.colUsed = []
+        self.blockUsed = []
+
+    # find top-left cell of block, converts that 2-dimensional array index to a 1-dimensional array index
+    def blockIdx(self, r, c):
+        blockX = floor(r/3)
+        blockY = floor(c/3)
+        return 3*blockX + blockY
 
     def fill(self, inputPuzzle):
         for line in inputPuzzle:
             self.assignments.append(line.rstrip().split(','))
 
-        if puzzle.mode != 0:
-            # fill grid of remaining possible values for forward checking
-            for r in range(9):
-                self.remaining.append([])
-                for c in range(9):
-                    self.remaining[r].append(deepcopy(self.domain)) # create a copy in each cell in self.remaining
-                # for
-            # for
+        # keeps track of which values have already been used on a row-by-row, col-by-col, or block-by-block basis
+        for i in range(9):
+            self.rowUsed.append([])
+            self.colUsed.append([])
+            self.blockUsed.append([])
 
         r = 0
         for row in self.assignments:
@@ -38,72 +46,38 @@ class Puzzle(object):
                 else:
                     self.setCell((r, c), int(value)) # convert values to ints
                     if self.mode != 0:
-                        self.removeFromRemaining((r, c), int(value))
+                        self.addToUsed((r, c), int(value))
                 c += 1
             # for
             r += 1
         # for
 
         # after filling empty list, randomize order of variables
-        shuffle(self.empty)
+        # shuffle(self.empty)
 
-    def removeFromRemaining(self, selectedCell, value):
+    # adds the value to rowUsed, colUsed, and blockUsed
+    def removeFromUsed(self, selectedCell, value):
         r = selectedCell[0]
         c = selectedCell[1]
+        b = self.blockIdx(r, c)
 
-        for i in range(9):
-            # print(self.remaining[r][i])
-            self.remaining[r][i] = [x for x in self.remaining[r][i] if x != value]
-            # print(self.remaining[r][i])
-            self.remaining[i][c] = [x for x in self.remaining[i][c] if x != value]
-        # for
+        self.rowUsed[r] = [x for x in self.rowUsed[r] if x != value]
+        self.colUsed[c] = [x for x in self.colUsed[c] if x != value]
+        self.blockUsed[b] = [x for x in self.blockUsed[b] if x != value]
 
-        # remove all possible values from selectedCell
-        self.remaining[r][c] = []
-
-        # remove as possible value for entire block
-
-        # find top-left cell of block
-        blockX = floor(r/3)*3
-        blockY = floor(c/3)*3
-
-        for i in range(3):
-            for j in range(3):
-                self.remaining[blockX + i][blockY + j] = [x for x in self.remaining[blockX + i][blockY + j] if x != value]
-            # for
-        # for
-
-    def addToRemaining(self, selectedCell, value):
+    def addToUsed(self, selectedCell, value):
         r = selectedCell[0]
         c = selectedCell[1]
+        b = self.blockIdx(r, c)
 
-        for i in range(9):
-            # print(self.remaining[r][i])
-            if value not in self.remaining[r][i]:
-                self.remaining[r][i].append(value)
-            # self.remaining[r][i] = [x for x in self.remaining[r][i] if x != value]
-            # print(self.remaining[r][i])
-            if value not in self.remaining[i][c]:
-                self.remaining[i][c].append(value)
-            # self.remaining[i][c] = [x for x in self.remaining[i][c] if x != value]
-        # for
+        if value not in self.rowUsed[r]:
+            self.rowUsed[r].append(value)
 
-        # remove all possible values from selectedCell
-        # self.remaining[r][c] = []
+        if value not in self.colUsed[c]:
+            self.colUsed[c].append(value)
 
-        # remove as possible value for entire block
-
-        # find top-left cell of block
-        blockX = floor(r/3)*3
-        blockY = floor(c/3)*3
-
-        for i in range(3):
-            for j in range(3):
-                if value not in self.remaining[blockX + i][blockY + j]:
-                    self.remaining[blockX + i][blockY + j].append(value)
-                # self.remaining[blockX + i][blockY + j] = [x for x in self.remaining[blockX + i][blockY + j] if x != value]
-            # for
-        # for
+        if value not in self.blockUsed[b]:
+            self.blockUsed[b].append(value)
 
     def display(self):
         print("   0 1 2 3 4 5 6 7 8\n")
@@ -121,33 +95,31 @@ class Puzzle(object):
             print('\n', end='')
         # for
 
-    def displayRemaining(self):
-        print("   0 1 2 3 4 5 6 7 8\n")
-
-        i = 0
-        for row in self.remaining:
-            print(i,' ', end='')
-            i += 1
-            for value in row:
-                if len(value) == 0:
-                    print('_ ', end='')
-                else:
-                    print(str(len(value))+' ', end='')
-            # for
-            print('\n', end='')
-        # for
+    def displayUsed(self):
+        print("rows: ")
+        for row in self.rowUsed:
+            print(row)
+        print('')
+        print("columns: ")
+        for col in self.colUsed:
+            print(col)
+        print('')
+        print("blocks: ")
+        for block in self.blockUsed:
+            print(block)
 
     def setCell(self, cell, value):
-        self.assignments[cell[0]][cell[1]] = value
+        r = cell[0]
+        c = cell[1]
+        b = self.blockIdx(r, c)
+
         if value == '':
             self.empty.append(cell)
-            if self.mode != 0:
-                self.addToRemaining(cell, value)
+            self.removeFromUsed(cell, self.assignments[r][c])
         else:
-            if self.mode != 0:
-                self.removeFromRemaining(cell, value)
-        if self.mode != 0:
-            self.displayRemaining()
+            self.addToUsed(cell, value)
+
+        self.assignments[r][c] = value
 
     # selects which cell to fill next
     def selectVariable(self):
@@ -266,13 +238,7 @@ if len(sys.argv) > 2:
 
 # main
 
-# checks puzzle.remaining against puzzle.assignments
-# for i in range(9):
-#     for j in range(9):
-#         if len(puzzle.remaining[i][j]) == 0 and puzzle.assignments[i][j] == '':
-#             print(i,j)
-#         else:
-#             print('good')
+
 
 ################# run the puzzles within a time limit #################
 
@@ -287,11 +253,17 @@ while (time.time() - startTime < timeLimit):
     inputPuzzle = open(inputFile)
     puzzle.fill( inputPuzzle )
 
+    puzzle.display()
+
+    # puzzle.displayUsed()
+    # exit()
+
     puzzleStartTime = time.time()
     numNodes = [0] # wrap int in a container so it gets mutated by the recursive calls to backtrackingSearch()
     completedPuzzle = backtrackingSearch( puzzle, numNodes, timeLimit, startTime )
 
     if completedPuzzle:
+        puzzle.display()
         results.append( (time.time()-puzzleStartTime, numNodes[0]) )
     else:
         print("ERROR! could not complete puzzle within time limit.")
