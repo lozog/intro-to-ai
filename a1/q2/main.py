@@ -14,11 +14,39 @@ class Puzzle(object):
         self.domain = {1,2,3,4,5,6,7,8,9}
         self.mode = mode
 
-        # forward checking variables
         # each list stores the values already used for each row, column, or block
         self.rowUsed = []
         self.colUsed = []
         self.blockUsed = []
+
+    def display(self):
+        print("   0 1 2 3 4 5 6 7 8\n")
+
+        i = 0
+        for row in self.assignments:
+            print(i,' ', end='')
+            i += 1
+            for value in row:
+                if value == '':
+                    print('_ ', end='')
+                else:
+                    print(str(value)+' ', end='')
+            # for
+            print('\n', end='')
+        # for
+
+    def displayUsed(self):
+        print("rows: ")
+        for row in self.rowUsed:
+            print(row)
+        print('')
+        print("columns: ")
+        for col in self.colUsed:
+            print(col)
+        print('')
+        print("blocks: ")
+        for block in self.blockUsed:
+            print(block)
 
     # find top-left cell of block, converts that 2-dimensional array index to a 1-dimensional array index
     def blockIdx(self, r, c):
@@ -45,8 +73,6 @@ class Puzzle(object):
                     self.empty.append(cellCoords)
                 else:
                     self.setCell((r, c), int(value)) # convert values to ints
-                    if self.mode != 0:
-                        self.addToUsed((r, c), int(value))
                 c += 1
             # for
             r += 1
@@ -78,35 +104,6 @@ class Puzzle(object):
 
         if value not in self.blockUsed[b]:
             self.blockUsed[b].append(value)
-
-    def display(self):
-        print("   0 1 2 3 4 5 6 7 8\n")
-
-        i = 0
-        for row in self.assignments:
-            print(i,' ', end='')
-            i += 1
-            for value in row:
-                if value == '':
-                    print('_ ', end='')
-                else:
-                    print(str(value)+' ', end='')
-            # for
-            print('\n', end='')
-        # for
-
-    def displayUsed(self):
-        print("rows: ")
-        for row in self.rowUsed:
-            print(row)
-        print('')
-        print("columns: ")
-        for col in self.colUsed:
-            print(col)
-        print('')
-        print("blocks: ")
-        for block in self.blockUsed:
-            print(block)
 
     def setCell(self, cell, value):
         r = cell[0]
@@ -141,10 +138,6 @@ class Puzzle(object):
         c = selectedCell[1]
         b = self.blockIdx(r, c)
 
-        # print("checking %d at %d %d %d" % (value, r, c, b))
-
-        # print( self.rowUsed[r])
-
         # ez
         if value in self.rowUsed[r]:
             return False
@@ -169,6 +162,7 @@ def backtrackingSearch(puzzle, numNodes, timeLimit, startTime):
     # print("cell: ", end='')
     # print(selectedCell)
 
+    # shuffle values before using
     possibleValues = []
     for value in puzzle.domain:
         possibleValues.append(value)
@@ -183,20 +177,18 @@ def backtrackingSearch(puzzle, numNodes, timeLimit, startTime):
         if puzzle.isConsistent(selectedCell, value):
 
             puzzle.setCell(selectedCell, value)
-            # ACHTUNG: we use setCell here, but if the following call to backtrackingSearch returns false, the
-            # value we tried for the cell won't be removed from self.rowUsed[r]!!
 
             # puzzle.display()
             # print(puzzle.empty)
 
             result = backtrackingSearch( puzzle, numNodes, timeLimit, startTime )
 
-
             if result != False:
                 return result
 
             puzzle.removeFromUsed(selectedCell, value)
-            # puzzle.setCell(selectedCell, '')
+    # for
+
     puzzle.setCell(selectedCell, '')
     return False
 #************************* def backtrackingSearch **********************************************
@@ -212,10 +204,6 @@ if len(sys.argv) > 1:
     mode = int(sys.argv[1])
 if len(sys.argv) > 2:
     inputFile = sys.argv[2] + ".txt"
-
-# main
-
-
 
 ################# run the puzzles within a time limit #################
 
