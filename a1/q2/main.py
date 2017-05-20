@@ -147,6 +147,80 @@ class Puzzle(object):
             return False
 
         return True
+
+    # forward-check after placing selectedCell
+    def forwardCheck(self, selectedCell):
+        r0 = selectedCell[0]
+        c0 = selectedCell[1]
+        b0 = self.blockIdx(r0, c0)
+
+        # check that entire row still has legal moves remaining
+        for i in range(9):
+            r = r0
+            c = i
+            b = self.blockIdx(r, c)
+            if self.assignments[r][c] != '':
+                break
+
+            movesRemaining = [1,2,3,4,5,6,7,8,9]
+            movesRemaining = [x for x in movesRemaining if x not in self.rowUsed[r]]
+            movesRemaining = [x for x in movesRemaining if x not in self.colUsed[c]]
+            movesRemaining = [x for x in movesRemaining if x not in self.blockUsed[b]]
+            # print(r,c,b)
+            # print(movesRemaining)
+
+            if len(movesRemaining) == 0:
+                return False
+        # for
+
+        # check that entire column still has legal moves remaining
+        for i in range(9):
+            r = i
+            c = c0
+            b = self.blockIdx(r, c)
+            if self.assignments[r][c] != '':
+                break
+
+            movesRemaining = [1,2,3,4,5,6,7,8,9]
+            movesRemaining = [x for x in movesRemaining if x not in self.rowUsed[r]]
+            movesRemaining = [x for x in movesRemaining if x not in self.colUsed[c]]
+            movesRemaining = [x for x in movesRemaining if x not in self.blockUsed[b]]
+            # print(r,c,b)
+            # print(movesRemaining)
+
+            if len(movesRemaining) == 0:
+                return False
+        # for
+
+        # check that entire block still has legal moves remaining
+        # print("forward checking:", selectedCell)
+        rb = floor(b0 / 3) * 3
+        cb = (b0 % 3) * 3
+        # print("topleft of block:",rb,cb)
+        for i in range(3):
+            for j in range(3):
+                r = rb + i
+                c = cb + j
+                b = b0
+
+                if self.assignments[r][c] != '':
+                    break
+
+                movesRemaining = [1,2,3,4,5,6,7,8,9]
+                movesRemaining = [x for x in movesRemaining if x not in self.rowUsed[r]]
+                movesRemaining = [x for x in movesRemaining if x not in self.colUsed[c]]
+                movesRemaining = [x for x in movesRemaining if x not in self.blockUsed[b]]
+                # print(r,c,b)
+                # print(movesRemaining)
+
+                if len(movesRemaining) == 0:
+                    return False
+            # for
+        # for
+        # print('')
+
+        return True
+
 #************************* class Puzzle **********************************************
 
 def backtrackingSearch(puzzle, numNodes, timeLimit, startTime):
@@ -181,10 +255,16 @@ def backtrackingSearch(puzzle, numNodes, timeLimit, startTime):
             # puzzle.display()
             # print(puzzle.empty)
 
-            result = backtrackingSearch( puzzle, numNodes, timeLimit, startTime )
-
-            if result != False:
-                return result
+            # forward checking
+            if puzzle.mode > 0:
+                if puzzle.forwardCheck(selectedCell):
+                    result = backtrackingSearch( puzzle, numNodes, timeLimit, startTime )
+                    if result != False:
+                        return result
+            else:
+                result = backtrackingSearch( puzzle, numNodes, timeLimit, startTime )
+                if result != False:
+                    return result
 
             puzzle.removeFromUsed(selectedCell, value)
     # for
@@ -192,6 +272,8 @@ def backtrackingSearch(puzzle, numNodes, timeLimit, startTime):
     puzzle.setCell(selectedCell, '')
     return False
 #************************* def backtrackingSearch **********************************************
+
+################# begin program - read in arguments ##############################
 
 startTime = time.time()
 
@@ -205,10 +287,13 @@ if len(sys.argv) > 1:
 if len(sys.argv) > 2:
     inputFile = sys.argv[2] + ".txt"
 
+#######################################################################
+
 ################# run the puzzles within a time limit #################
 
-timeLimit = 300
+timeLimit = 1000
 results = []
+numCompleted = 0
 
 while (time.time() - startTime < timeLimit):
 
@@ -230,9 +315,14 @@ while (time.time() - startTime < timeLimit):
     if completedPuzzle:
         # puzzle.display()
         results.append( (time.time()-puzzleStartTime, numNodes[0]) )
+        numCompleted += 1
     else:
         print("ERROR! could not complete puzzle within time limit.")
         # completedPuzzle.display()
+
+    if numCompleted == 50:
+        break
+# while
 
 ###################################################################
 
