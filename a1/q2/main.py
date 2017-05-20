@@ -53,7 +53,7 @@ class Puzzle(object):
         # for
 
         # after filling empty list, randomize order of variables
-        # shuffle(self.empty)
+        shuffle(self.empty)
 
     # adds the value to rowUsed, colUsed, and blockUsed
     def removeFromUsed(self, selectedCell, value):
@@ -137,49 +137,21 @@ class Puzzle(object):
 
     # check if given value follows restraints
     def isConsistent(self, selectedCell, value):
-        x = selectedCell[0]
-        y = selectedCell[1]
-        self.assignments[x][y] = value
+        r = selectedCell[0]
+        c = selectedCell[1]
+        b = self.blockIdx(r, c)
 
-        # check alldiff of each row
-        for r in range(9):
-            row = [i for i in self.assignments[r] if i != ''] # get # of values in row - ignore empty spaces, they have no impact on consistency
-            rowSet = set(row) # get # of unique values in row
-            if len(row) != len(rowSet):
-                self.assignments[x][y] = ''
-                return False
-        # for
+        # print("checking %d at %d %d %d" % (value, r, c, b))
 
-        # check alldiff of each column
-        for c in range(9):
-            col = [row[c] for row in self.assignments if row[c] != '']
-            colSet = set(col)
-            if len(col) != len(colSet):
-                self.assignments[x][y] = ''
-                return False
-        # for
+        # print( self.rowUsed[r])
 
-        # check alldiff of each block
-        # (blockX, blockY) is the top-left most cell of each block
-        for blockX in {0,3,6}:
-            for blockY in {0,3,6}:
-                block = []
-
-                # loop over each cell in the block
-                for i in range(3):
-                    for j in range(3):
-                        value = self.assignments[blockX + i][blockY + j]
-                        if value != '':
-                            block.append( value )
-                    # for
-                # for
-
-                blockSet = set(block)
-                if len(block) != len(blockSet):
-                    self.assignments[x][y] = ''
-                    return False
-            # for
-        # for
+        # ez
+        if value in self.rowUsed[r]:
+            return False
+        if value in self.colUsed[c]:
+            return False
+        if value in self.blockUsed[b]:
+            return False
 
         return True
 #************************* class Puzzle **********************************************
@@ -210,16 +182,21 @@ def backtrackingSearch(puzzle, numNodes, timeLimit, startTime):
 
         if puzzle.isConsistent(selectedCell, value):
 
+            puzzle.setCell(selectedCell, value)
+            # ACHTUNG: we use setCell here, but if the following call to backtrackingSearch returns false, the
+            # value we tried for the cell won't be removed from self.rowUsed[r]!!
+
             # puzzle.display()
             # print(puzzle.empty)
 
-            puzzle.setCell(selectedCell, value)
-
             result = backtrackingSearch( puzzle, numNodes, timeLimit, startTime )
+
 
             if result != False:
                 return result
 
+            puzzle.removeFromUsed(selectedCell, value)
+            # puzzle.setCell(selectedCell, '')
     puzzle.setCell(selectedCell, '')
     return False
 #************************* def backtrackingSearch **********************************************
@@ -242,7 +219,7 @@ if len(sys.argv) > 2:
 
 ################# run the puzzles within a time limit #################
 
-timeLimit = 1000
+timeLimit = 300
 results = []
 
 while (time.time() - startTime < timeLimit):
@@ -253,7 +230,7 @@ while (time.time() - startTime < timeLimit):
     inputPuzzle = open(inputFile)
     puzzle.fill( inputPuzzle )
 
-    puzzle.display()
+    # puzzle.display()
 
     # puzzle.displayUsed()
     # exit()
@@ -263,13 +240,11 @@ while (time.time() - startTime < timeLimit):
     completedPuzzle = backtrackingSearch( puzzle, numNodes, timeLimit, startTime )
 
     if completedPuzzle:
-        puzzle.display()
+        # puzzle.display()
         results.append( (time.time()-puzzleStartTime, numNodes[0]) )
     else:
         print("ERROR! could not complete puzzle within time limit.")
         # completedPuzzle.display()
-
-    break
 
 ###################################################################
 
