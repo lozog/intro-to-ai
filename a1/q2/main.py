@@ -224,9 +224,10 @@ class Puzzle(object):
             # use Least Constraining Value heuristic to choose from remaining values
             leastConstrainingCount = -1
             leastConstraining = []
+
             for value in possibleValues:
                 numConstraining = self.getNumConstrainingValue(selectedCell, value)
-                # print(selectedCell, value, numConstraining)
+
                 if len(leastConstraining) == 0:
                     # base case
                     leastConstraining.append(value)
@@ -237,7 +238,7 @@ class Puzzle(object):
                 elif numConstraining == leastConstrainingCount:
                     leastConstraining.append(value)
             # for
-            # print(selectedCell, leastConstraining)
+
             # if there are still possibilities, randomly choose.
             selectedValue = leastConstraining[ randint(0, len(leastConstraining)-1) ]
 
@@ -245,9 +246,6 @@ class Puzzle(object):
 
     # selects which cell to fill next
     def selectVariable(self):
-        # heuristics:
-        # variable (cell): most constrained:
-        # fewest legal moves
         # go throught entire grid, find cell with fewest legal values
         mostConstrained = []
         currentNumMostConstrained = -1
@@ -269,7 +267,6 @@ class Puzzle(object):
                     elif numMostConstrained == currentNumMostConstrained:
                         mostConstrained.append( cell )
             # for
-            # print("mostConstrained:", mostConstrained)
 
             # tiebreaker: most constraining
             # cell with most other empty cells in its row, col, and block
@@ -286,34 +283,23 @@ class Puzzle(object):
                     mostConstraining.append( cell )
                 else:
                     # if # is new highest, save it
-                    # print(numConstraining, currentNumConstraining)
                     if numConstraining > currentNumConstraining:
                         currentNumConstraining = numConstraining
                         mostConstraining = [ cell ]
                     elif numConstraining == currentNumConstraining:
                         mostConstraining.append( cell )
-                # print(mostConstraining)
             # for
-
-            # print("mostConstraining:", mostConstraining)
 
             # if there are still possibilities, randomly choose.
             selectedCell = mostConstraining[ randint(0, len(mostConstraining)-1) ]
             self.empty.remove( selectedCell )
 
-            # print("randomly selected", selectedCell)
-
-            # print(mostConstrained)
             return selectedCell
 
         else:
             # empty list has already been shuffled
             selectedCell = self.empty.pop()
             return selectedCell
-            # numEmpty = len(self.empty)
-            # randIdx = randint(0, numEmpty-1)
-            # print(numEmpty, randIdx)
-            # return self.empty.pop( randIdx )
 
     # checks if entire puzzle is filled out
     def isComplete(self):
@@ -396,9 +382,6 @@ def backtrackingSearch(puzzle, numNodes, timeLimit, startTime):
 
     selectedCell = puzzle.selectVariable()
 
-    # print("cell: ", end='')
-    # print(selectedCell)
-
     valuesAttempted = set()
 
     for i in range(9): # domain has 9 possible values
@@ -466,7 +449,6 @@ while (time.time() - startTime < timeLimit):
     puzzle.fill( inputPuzzle )
 
     # puzzle.display()
-
     # puzzle.displayUsed()
     # exit()
 
