@@ -134,35 +134,94 @@ class Puzzle(object):
 
         return len(movesRemaining)
 
+    def getNumConstraining(self, cell):
+        r = cell[0]
+        c = cell[1]
+        b = self.blockIdx(r, c)
+
+        constrainedCells = set() # use a set to not count duplicates
+        for i in range(9):
+            if self.assignments[r][i] == '':
+                constrainedCells.add( (r,i) )
+        for i in range(9):
+            if self.assignments[i][c] == '':
+                constrainedCells.add( (i, c) )
+
+        rb = floor(b / 3) * 3
+        cb = (b % 3) * 3
+        for i in range(3):
+            for j in range(3):
+                if self.assignments[rb + i][cb + j] == '':
+                    constrainedCells.add( (rb + i, cb + j) )
+
+
+        # print(cell,len(constrainedCells))
+        # print(constrainedCells)
+        return len(constrainedCells)
+
     # selects which cell to fill next
     def selectVariable(self):
         # heuristics:
         # variable (cell): most constrained:
         # fewest legal moves
         # go throught entire grid, find cell with fewest legal values
+        mostConstrained = []
+        currentNumMostConstrained = -1
         if mode == 2:
-            currentNumMostConstrained = -1
             for cell in self.empty:
                 numMostConstrained = self.getNumOfRemainingMoves(cell)
-                print(cell,numMostConstrained)
+                # print(cell,numMostConstrained)
 
-                if currentNumMostConstrained == -1:
+                if len(mostConstrained) == 0:
                     # base case
                     currentNumMostConstrained = numMostConstrained
-                    currentMostConstrained = cell
+                    mostConstrained.append( cell )
                 else:
                     # if # is new lowest, save it
+                    # print(numMostConstrained, currentNumMostConstrained)
                     if numMostConstrained < currentNumMostConstrained:
-                        currentMostConstrained = cell
+                        currentNumMostConstrained = numMostConstrained
+                        mostConstrained = [ cell ]
+                    elif numMostConstrained == currentNumMostConstrained:
+                        mostConstrained.append( cell )
             # for
-            print(currentMostConstrained)
-            self.empty.remove(currentMostConstrained)
-            return currentMostConstrained
+            # print("mostConstrained:", mostConstrained)
 
-            # TODO: keep track of ties in most constrained
             # tiebreaker: most constraining
             # cell with most other empty cells in its row, col, and block
             # for each cell: find cell with LEAST # of things in its rowUSed, colUsed, and blockUsed
+            mostConstraining = []
+            currentNumConstraining = -1
+            for cell in mostConstrained:
+                # do shit
+                numConstraining = self.getNumConstraining(cell)
+
+                if len(mostConstrained) == 0:
+                    # base case
+                    currentNumConstraining = numConstraining
+                    mostConstraining.append( cell )
+                else:
+                    # if # is new highest, save it
+                    # print(numConstraining, currentNumConstraining)
+                    if numConstraining > currentNumConstraining:
+                        currentNumConstraining = numConstraining
+                        mostConstraining = [ cell ]
+                    elif numConstraining == currentNumConstraining:
+                        mostConstraining.append( cell )
+                # print(mostConstraining)
+            # for
+
+            # print("mostConstraining:", mostConstraining)
+
+            # if there are still possibilities, randomly choose.
+            selectedCell = mostConstraining[ randint(0, len(mostConstraining)-1) ]
+            self.empty.remove( selectedCell )
+
+            # print("randomly selected", selectedCell)
+
+            # print(mostConstrained)
+            return selectedCell
+
         else:
             # empty list has already been shuffled
             selectedCell = self.empty.pop()
@@ -275,7 +334,7 @@ def backtrackingSearch(puzzle, numNodes, timeLimit, startTime):
 
             puzzle.setCell(selectedCell, value)
 
-            puzzle.display()
+            # puzzle.display()
             # print(puzzle.empty)
 
             # forward checking
@@ -326,7 +385,7 @@ while (time.time() - startTime < timeLimit):
     inputPuzzle = open(inputFile)
     puzzle.fill( inputPuzzle )
 
-    puzzle.display()
+    # puzzle.display()
 
     # puzzle.displayUsed()
     # exit()
@@ -336,13 +395,13 @@ while (time.time() - startTime < timeLimit):
     completedPuzzle = backtrackingSearch( puzzle, numNodes, timeLimit, startTime )
 
     if completedPuzzle:
-        puzzle.display()
+        # puzzle.display()
         results.append( (time.time()-puzzleStartTime, numNodes[0]) )
         numCompleted += 1
     else:
         print("ERROR! could not complete puzzle within time limit.")
         # completedPuzzle.display()
-    break
+    # break
     if numCompleted == 50:
         break
 # while
