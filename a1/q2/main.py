@@ -4,7 +4,7 @@ import sys
 import time
 from math import floor, sqrt, pow
 from copy import deepcopy
-from random import randint, shuffle
+from random import randint, shuffle, choice
 
 class Puzzle(object):
 
@@ -158,6 +158,19 @@ class Puzzle(object):
         # print(cell,len(constrainedCells))
         # print(constrainedCells)
         return len(constrainedCells)
+
+    def selectValue(self, attemptedValues):
+        # TODO
+        # for each possible value, count how many times it shows up in the possible values for row, col, and block
+        # pick value that shows up the least
+        if mode != 2:
+            # randomly select from remaining values
+            value = choice( tuple(self.domain.difference( attemptedValues )) )
+        else:
+            pass
+            # use Least Constraining Value heuristic to choose from remaining values
+
+        return value
 
     # selects which cell to fill next
     def selectVariable(self):
@@ -315,18 +328,12 @@ def backtrackingSearch(puzzle, numNodes, timeLimit, startTime):
     # print("cell: ", end='')
     # print(selectedCell)
 
-    if mode != 2:
-        # shuffle values before using
-        possibleValues = []
-        for value in puzzle.domain:
-            possibleValues.append(value)
-        shuffle(possibleValues)
-        # print(possibleValues)
-    else:
-        possibleValues = puzzle.domain
+    valuesAttempted = set()
 
-    for value in possibleValues:
-        # print("checking value: " + str(value))
+    for i in range(9): # domain has 9 possible values
+        value = puzzle.selectValue( valuesAttempted )
+        valuesAttempted.add( value )
+
         numNodes[0] += 1
         # print(numNodes[0])
 
@@ -385,7 +392,7 @@ while (time.time() - startTime < timeLimit):
     inputPuzzle = open(inputFile)
     puzzle.fill( inputPuzzle )
 
-    # puzzle.display()
+    puzzle.display()
 
     # puzzle.displayUsed()
     # exit()
@@ -395,21 +402,18 @@ while (time.time() - startTime < timeLimit):
     completedPuzzle = backtrackingSearch( puzzle, numNodes, timeLimit, startTime )
 
     if completedPuzzle:
-        # puzzle.display()
+        puzzle.display()
         results.append( (time.time()-puzzleStartTime, numNodes[0]) )
         numCompleted += 1
     else:
         print("ERROR! could not complete puzzle within time limit.")
         # completedPuzzle.display()
-    # break
+    break
     if numCompleted == 50:
         break
 # while
 
 ###################################################################
-
-# value: least constrained
-# value that rules out the fewest values in remaining cells
 
 ################# analyze results #################
 
