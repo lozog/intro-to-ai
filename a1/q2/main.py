@@ -120,7 +120,7 @@ class Puzzle(object):
 
         self.assignments[r][c] = value
 
-    def getNumOfRemainingMoves(self, cell):
+    def getRemainingMoves(self, cell):
         r = cell[0]
         c = cell[1]
         b = self.blockIdx(r, c)
@@ -129,10 +129,11 @@ class Puzzle(object):
         movesRemaining = [x for x in movesRemaining if x not in self.rowUsed[r]]
         movesRemaining = [x for x in movesRemaining if x not in self.colUsed[c]]
         movesRemaining = [x for x in movesRemaining if x not in self.blockUsed[b]]
-        # print(r,c,b)
-        # print(movesRemaining)
 
-        return len(movesRemaining)
+        return movesRemaining
+
+    def getNumOfRemainingMoves(self, cell):
+        return len( self.getRemainingMoves(cell) )
 
     def getNumConstraining(self, cell):
         r = cell[0]
@@ -154,23 +155,93 @@ class Puzzle(object):
                 if self.assignments[rb + i][cb + j] == '':
                     constrainedCells.add( (rb + i, cb + j) )
 
-
         # print(cell,len(constrainedCells))
         # print(constrainedCells)
         return len(constrainedCells)
 
-    def selectValue(self, attemptedValues):
-        # TODO
-        # for each possible value, count how many times it shows up in the possible values for row, col, and block
-        # pick value that shows up the least
+    # count occurrences of values in the cells that cell constrains
+    def getNumConstrainingValue(self, cell, value):
+        r = cell[0]
+        c = cell[1]
+        b = self.blockIdx(r, c)
+
+        seenCells = set() # use a set to not count duplicates
+        count = 0
+
+        for i in range(9):
+            if (r, i) in seenCells:
+                continue
+
+            if self.assignments[r][i] == '':
+                seenCells.add( (r,i) )
+                if value in self.getRemainingMoves( (r, i) ):
+                    count += 1
+                    # print((r,i))
+        # for
+
+        for i in range(9):
+            if (i, c) in seenCells:
+                continue
+
+            if self.assignments[i][c] == '':
+                seenCells.add( (i, c) )
+                if value in self.getRemainingMoves( (i, c) ):
+                    count += 1
+                    # print((i,c))
+        # for
+
+        rb = floor(b / 3) * 3
+        cb = (b % 3) * 3
+        for i in range(3):
+            for j in range(3):
+                if (rb + i, cb + j) in seenCells:
+                    continue
+
+                if self.assignments[rb + i][cb + j] == '':
+                    seenCells.add( (rb + i, cb + j) )
+                    if value in self.getRemainingMoves( (rb + i, cb + j) ):
+                        count += 1
+                        # print( (rb + i, cb + j) )
+            # for
+        return count
+
+    def selectValue(self, selectedCell, attemptedValues):
+        remainingValues = self.getRemainingMoves(selectedCell)
+        possibleValues = tuple(self.domain.difference( attemptedValues ))
+
+        # print("remainingValues", remainingValues)
+        possibleValues = [ x for x in possibleValues if x in remainingValues ]
+
+        # print("possibleValues", possibleValues)
+
+        if len(possibleValues) == 0:
+            return False
+
         if mode != 2:
             # randomly select from remaining values
-            value = choice( tuple(self.domain.difference( attemptedValues )) )
+            selectedValue = choice( possibleValues )
         else:
-            pass
             # use Least Constraining Value heuristic to choose from remaining values
+            leastConstrainingCount = -1
+            leastConstraining = []
+            for value in possibleValues:
+                numConstraining = self.getNumConstrainingValue(selectedCell, value)
+                # print(selectedCell, value, numConstraining)
+                if len(leastConstraining) == 0:
+                    # base case
+                    leastConstraining.append(value)
+                    leastConstrainingCount = numConstraining
+                elif numConstraining < leastConstrainingCount:
+                    leastConstrainingCount = numConstraining
+                    leastConstraining = [ value ]
+                elif numConstraining == leastConstrainingCount:
+                    leastConstraining.append(value)
+            # for
+            # print(selectedCell, leastConstraining)
+            # if there are still possibilities, randomly choose.
+            selectedValue = leastConstraining[ randint(0, len(leastConstraining)-1) ]
 
-        return value
+        return selectedValue
 
     # selects which cell to fill next
     def selectVariable(self):
@@ -331,7 +402,9 @@ def backtrackingSearch(puzzle, numNodes, timeLimit, startTime):
     valuesAttempted = set()
 
     for i in range(9): # domain has 9 possible values
-        value = puzzle.selectValue( valuesAttempted )
+        value = puzzle.selectValue( selectedCell, valuesAttempted )
+        if not value: # no more possible values remaining
+            break
         valuesAttempted.add( value )
 
         numNodes[0] += 1
@@ -392,7 +465,7 @@ while (time.time() - startTime < timeLimit):
     inputPuzzle = open(inputFile)
     puzzle.fill( inputPuzzle )
 
-    puzzle.display()
+    # puzzle.display()
 
     # puzzle.displayUsed()
     # exit()
@@ -402,13 +475,13 @@ while (time.time() - startTime < timeLimit):
     completedPuzzle = backtrackingSearch( puzzle, numNodes, timeLimit, startTime )
 
     if completedPuzzle:
-        puzzle.display()
+        # puzzle.display()
         results.append( (time.time()-puzzleStartTime, numNodes[0]) )
         numCompleted += 1
     else:
         print("ERROR! could not complete puzzle within time limit.")
         # completedPuzzle.display()
-    break
+
     if numCompleted == 50:
         break
 # while
