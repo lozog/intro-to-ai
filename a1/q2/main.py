@@ -79,7 +79,9 @@ class Puzzle(object):
         # for
 
         # after filling empty list, randomize order of variables
-        shuffle(self.empty)
+        # unless we're using heuristics
+        if mode != 2:
+            shuffle(self.empty)
 
     # adds the value to rowUsed, colUsed, and blockUsed
     def removeFromUsed(self, selectedCell, value):
@@ -118,15 +120,57 @@ class Puzzle(object):
 
         self.assignments[r][c] = value
 
+    def getNumOfRemainingMoves(self, cell):
+        r = cell[0]
+        c = cell[1]
+        b = self.blockIdx(r, c)
+
+        movesRemaining = [1,2,3,4,5,6,7,8,9]
+        movesRemaining = [x for x in movesRemaining if x not in self.rowUsed[r]]
+        movesRemaining = [x for x in movesRemaining if x not in self.colUsed[c]]
+        movesRemaining = [x for x in movesRemaining if x not in self.blockUsed[b]]
+        # print(r,c,b)
+        # print(movesRemaining)
+
+        return len(movesRemaining)
+
     # selects which cell to fill next
     def selectVariable(self):
-        # empty list has already been shuffled
-        selectedCell = self.empty.pop()
-        return selectedCell
-        # numEmpty = len(self.empty)
-        # randIdx = randint(0, numEmpty-1)
-        # print(numEmpty, randIdx)
-        # return self.empty.pop( randIdx )
+        # heuristics:
+        # variable (cell): most constrained:
+        # fewest legal moves
+        # go throught entire grid, find cell with fewest legal values
+        if mode == 2:
+            currentNumMostConstrained = -1
+            for cell in self.empty:
+                numMostConstrained = self.getNumOfRemainingMoves(cell)
+                print(cell,numMostConstrained)
+
+                if currentNumMostConstrained == -1:
+                    # base case
+                    currentNumMostConstrained = numMostConstrained
+                    currentMostConstrained = cell
+                else:
+                    # if # is new lowest, save it
+                    if numMostConstrained < currentNumMostConstrained:
+                        currentMostConstrained = cell
+            # for
+            print(currentMostConstrained)
+            self.empty.remove(currentMostConstrained)
+            return currentMostConstrained
+
+            # TODO: keep track of ties in most constrained
+            # tiebreaker: most constraining
+            # cell with most other empty cells in its row, col, and block
+            # for each cell: find cell with LEAST # of things in its rowUSed, colUsed, and blockUsed
+        else:
+            # empty list has already been shuffled
+            selectedCell = self.empty.pop()
+            return selectedCell
+            # numEmpty = len(self.empty)
+            # randIdx = randint(0, numEmpty-1)
+            # print(numEmpty, randIdx)
+            # return self.empty.pop( randIdx )
 
     # checks if entire puzzle is filled out
     def isComplete(self):
@@ -158,18 +202,10 @@ class Puzzle(object):
         for i in range(9):
             r = r0
             c = i
-            b = self.blockIdx(r, c)
             if self.assignments[r][c] != '':
                 break
 
-            movesRemaining = [1,2,3,4,5,6,7,8,9]
-            movesRemaining = [x for x in movesRemaining if x not in self.rowUsed[r]]
-            movesRemaining = [x for x in movesRemaining if x not in self.colUsed[c]]
-            movesRemaining = [x for x in movesRemaining if x not in self.blockUsed[b]]
-            # print(r,c,b)
-            # print(movesRemaining)
-
-            if len(movesRemaining) == 0:
+            if not self.getNumOfRemainingMoves( (r, c) ):
                 return False
         # for
 
@@ -177,18 +213,10 @@ class Puzzle(object):
         for i in range(9):
             r = i
             c = c0
-            b = self.blockIdx(r, c)
             if self.assignments[r][c] != '':
                 break
 
-            movesRemaining = [1,2,3,4,5,6,7,8,9]
-            movesRemaining = [x for x in movesRemaining if x not in self.rowUsed[r]]
-            movesRemaining = [x for x in movesRemaining if x not in self.colUsed[c]]
-            movesRemaining = [x for x in movesRemaining if x not in self.blockUsed[b]]
-            # print(r,c,b)
-            # print(movesRemaining)
-
-            if len(movesRemaining) == 0:
+            if not self.getNumOfRemainingMoves( (r, c) ):
                 return False
         # for
 
@@ -201,19 +229,11 @@ class Puzzle(object):
             for j in range(3):
                 r = rb + i
                 c = cb + j
-                b = b0
 
                 if self.assignments[r][c] != '':
                     break
 
-                movesRemaining = [1,2,3,4,5,6,7,8,9]
-                movesRemaining = [x for x in movesRemaining if x not in self.rowUsed[r]]
-                movesRemaining = [x for x in movesRemaining if x not in self.colUsed[c]]
-                movesRemaining = [x for x in movesRemaining if x not in self.blockUsed[b]]
-                # print(r,c,b)
-                # print(movesRemaining)
-
-                if len(movesRemaining) == 0:
+                if not self.getNumOfRemainingMoves( (r, c) ):
                     return False
             # for
         # for
@@ -236,12 +256,15 @@ def backtrackingSearch(puzzle, numNodes, timeLimit, startTime):
     # print("cell: ", end='')
     # print(selectedCell)
 
-    # shuffle values before using
-    possibleValues = []
-    for value in puzzle.domain:
-        possibleValues.append(value)
-    shuffle(possibleValues)
-    # print(possibleValues)
+    if mode != 2:
+        # shuffle values before using
+        possibleValues = []
+        for value in puzzle.domain:
+            possibleValues.append(value)
+        shuffle(possibleValues)
+        # print(possibleValues)
+    else:
+        possibleValues = puzzle.domain
 
     for value in possibleValues:
         # print("checking value: " + str(value))
@@ -252,7 +275,7 @@ def backtrackingSearch(puzzle, numNodes, timeLimit, startTime):
 
             puzzle.setCell(selectedCell, value)
 
-            # puzzle.display()
+            puzzle.display()
             # print(puzzle.empty)
 
             # forward checking
@@ -303,7 +326,7 @@ while (time.time() - startTime < timeLimit):
     inputPuzzle = open(inputFile)
     puzzle.fill( inputPuzzle )
 
-    # puzzle.display()
+    puzzle.display()
 
     # puzzle.displayUsed()
     # exit()
@@ -313,18 +336,21 @@ while (time.time() - startTime < timeLimit):
     completedPuzzle = backtrackingSearch( puzzle, numNodes, timeLimit, startTime )
 
     if completedPuzzle:
-        # puzzle.display()
+        puzzle.display()
         results.append( (time.time()-puzzleStartTime, numNodes[0]) )
         numCompleted += 1
     else:
         print("ERROR! could not complete puzzle within time limit.")
         # completedPuzzle.display()
-
+    break
     if numCompleted == 50:
         break
 # while
 
 ###################################################################
+
+# value: least constrained
+# value that rules out the fewest values in remaining cells
 
 ################# analyze results #################
 
