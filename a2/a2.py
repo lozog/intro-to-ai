@@ -3,9 +3,14 @@ import numpy as np
 # with help from Briuaku's answer:
 # https://stackoverflow.com/questions/24432209/python-index-an-array-using-the-colon-operator-in-an-arbitrary-dimension
 def restrict(factor, variable, value):
-    # take the (value)-th value of the (variable)-th dimension
-    slice_index = [slice(None)] * factor.ndim
-    slice_index[variable] = value
+    if factor.shape[variable] == 1:
+        # restrict on a variable not used in the factor
+        reshape_index = [2] * (factor.ndim-1)
+        return factor.reshape(reshape_index)
+    else:
+        # take the (value)-th value of the (variable)-th dimension
+        slice_index = [slice(None)] * factor.ndim
+        slice_index[variable] = value
     return factor[ tuple(slice_index) ]
 
 def multiply(factor1, factor2):
@@ -24,13 +29,22 @@ def normalize(factor):
     return factor
 
 def inference(factorList, queryVariables, orderedListOfHiddenVariables, evidenceList):
+    # for Q in queryVariables
     print("TODO: implement")
+
+
 
 ####### Tests for restrict
 
-# factor = np.arange(8).reshape(2,2,2)
+# factor = np.arange(4).reshape(1,2,2)
+# factor = factor + 4
 # print(factor)
-# print(restrict(factor, 1, 0))
+# print('')
+# factor = restrict(factor, 0, 1)
+# print(factor)
+# print('')
+# factor = restrict(factor, 1, 1)
+# print(factor)
 
 ####### Tests for multiply
 
