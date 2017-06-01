@@ -9,7 +9,9 @@ def restrict(factor, variable, value):
     return factor[ tuple(slice_index) ]
 
 def multiply(factor1, factor2):
-    print("TODO: implement")
+    # f = factor1.reshape(2,2,1)
+    # g = factor2.reshape(1,2,2)
+    return factor1 * factor2
 
 def sumout(factor, variable):
     return factor.sum(variable)
@@ -30,11 +32,23 @@ def inference(factorList, queryVariables, orderedListOfHiddenVariables, evidence
 # print(factor)
 # print(restrict(factor, 1, 0))
 
+####### Tests for multiply
+
+# factor1 = np.arange(4).reshape(2,2,1)
+# factor2 = factor1 + 4
+# factor2 = factor2.reshape(1,2,2)
+# print(factor1)
+# print(factor2)
+# print(multiply(factor1, factor2))
+
 ####### Tests for sumout
 
-factor = np.arange(8).reshape(2,2,2)
-print(factor)
-print(sumout(factor, 0))
+# print('sumout')
+# factor = np.arange(8).reshape(2,2,2)
+# # factor = np.array([[0.6, 0.4], [0.1, 0.9]])
+
+# print(factor)
+# print(sumout(factor, 0))
 
 # ####### Tests for normalize
 #
