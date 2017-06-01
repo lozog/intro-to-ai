@@ -12,8 +12,7 @@ def multiply(factor1, factor2):
     print("TODO: implement")
 
 def sumout(factor, variable):
-    totalSum = factor.sum()
-
+    return factor.sum(variable)
 
 def normalize(factor):
     totalSum = factor.sum()
@@ -31,8 +30,14 @@ def inference(factorList, queryVariables, orderedListOfHiddenVariables, evidence
 # print(factor)
 # print(restrict(factor, 1, 0))
 
-####### Tests for normalize
+####### Tests for sumout
 
-factor = np.arange(8, dtype=np.float64).reshape(2,2,2)
+factor = np.arange(8).reshape(2,2,2)
 print(factor)
-print(normalize(factor))
+print(sumout(factor, 0))
+
+# ####### Tests for normalize
+#
+# factor = np.arange(8, dtype=np.float64).reshape(2,2,2)
+# print(factor)
+# print(normalize(factor))
