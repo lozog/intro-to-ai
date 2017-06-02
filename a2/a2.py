@@ -3,23 +3,23 @@ import numpy as np
 # with help from Briuaku's answer:
 # https://stackoverflow.com/questions/24432209/python-index-an-array-using-the-colon-operator-in-an-arbitrary-dimension
 def restrict(factor, variable, value):
-    if factor.shape[variable] == 1:
-        # restrict on a variable not used in the factor
-        reshape_index = [2] * (factor.ndim-1)
-        return factor.reshape(reshape_index)
-    else:
-        # take the (value)-th value of the (variable)-th dimension
-        slice_index = [slice(None)] * factor.ndim
-        slice_index[variable] = value
-    return factor[ tuple(slice_index) ]
+    # take the (value)-th value of the (variable)-th dimension
+    slice_index = [slice(None)] * factor.ndim
+    slice_index[variable] = value
+
+    shape = [x for x in factor.shape]
+    shape[variable] = 1
+
+    return factor[ tuple(slice_index) ].reshape(shape)
 
 def multiply(factor1, factor2):
-    # f = factor1.reshape(2,2,1)
-    # g = factor2.reshape(1,2,2)
     return factor1 * factor2
 
 def sumout(factor, variable):
-    return factor.sum(variable)
+    shape = [x for x in factor.shape]
+    summed = factor.sum(variable)
+    shape[variable] = 1
+    return summed.reshape(shape)
 
 def normalize(factor):
     totalSum = factor.sum()
@@ -35,28 +35,122 @@ def _multiplyList(factorList):
     else:
         return multiply(factorList[0], factorList[1:])
 
+# def inference(factorList, queryVariables, orderedListOfHiddenVariables, evidenceList):
+    # for idx,evidence in enumerate(evidenceList):
+    #     if evidence == -1:
+    #         continue
+    #     # find factors that are influenced by evidence
+    #     factorsUsingEvidence = []
+    #     for factor in factorList:
+    #         shape = factor.shape
+    #         if shape[idx] > 1:
+    #             factorsUsingEvidence.append(factor)
+    #     # for
+    #     # print(factorList)
+    #     # print(factorsUsingEvidence)
+    #     factorList = [f for f in factorList if not (f == factorsUsingEvidence).all()]
+    #     for factor in factorsUsingEvidence:
+    #         factor = restrict(factor, idx, evidence)
+    #         factorList.append(factor)
+    #     # for
+    # # for
+    #
+    # for var in orderedListOfHiddenVariables:
+    #     # multiply all factors that have var in them
+    #     factorsToMultiply = []
+    #     for factor in factorList:
+    #         if factor.shape[var] > 1:
+    #             factorsToMultiply.append(factor)
+    #     # for
+    #     # print(factorList)
+    #     # f = factorList[0]
+    #     # print(f)
+    #     # print(factorsToMultiply)
+    #     # print((f == factorsToMultiply))
+    #
+    #     factorList = [f for f in factorList if not (f == factorsToMultiply)]
+    #     product = _multiplyList(factorsToMultiply)
+    #     summed = sumout(product, var)
+    #     factorList.append(summed)
+    # # for
+    #
+    # product = _multiplyList(factorList)
+    # print(product)
+    # return normalize(product)
+
+def _inArray(factorList, factor):
+    # print(factor)
+    # print('B')
+    for i,f in enumerate(factorList):
+        # print(f)
+        # print(i,'AA')
+        if (f == factor).all():
+            # print("found")
+            return True
+    # for
+    # print("notfound")
+    return False
+
 def inference(factorList, queryVariables, orderedListOfHiddenVariables, evidenceList):
-    for factor in factorList:
-        for idx,evidence in evidenceList:
-            factor = restrict(factor, idx, evidence)
+    # for f in factorList:
+    #     print(f)
+    #     print('ZZ\n')
+
+    # call restrict on all factors that contain any of the variables in the evidence
+    for idx,evidence in enumerate(evidenceList):
+        if evidence == -1:
+            continue
+        # find factors that are influenced by evidence
+        factorsUsingEvidence = []
+        for idx2,factor in enumerate(factorList):
+            shape = factor.shape
+            if shape[idx] > 1:
+                factorList[idx2] = restrict(factor, idx, evidence)
         # for
     # for
 
+    # for f in factorList:
+    #     print(f)
+    #     print('ZZ\n')
+
+    # for each hidden variable, create a new factor by multiplying factors that contain hidden variable
     for var in orderedListOfHiddenVariables:
-        # multiply all factors that have var in them
         factorsToMultiply = []
         for factor in factorList:
             if factor.shape[var] > 1:
                 factorsToMultiply.append(factor)
         # for
+        # for f in factorsToMultiply:
+        #     print(f)
+        #     print('x')
+        #
+        # for f in factorList:
+        #     print(f)
+        #     print('Y')
 
-        factorList = [f for f in factorList if f not in factorsToMultiply]
+        # problem: doesn't keep f1(A)
+        factorList = [f for f in factorList if not _inArray(factorsToMultiply, f)]
+        # for f in factorList:
+        #     print(f)
+        #     print('NNNN\n')
+
         product = _multiplyList(factorsToMultiply)
+
+        # sum out the hidden variable
         summed = sumout(product, var)
         factorList.append(summed)
     # for
 
+    # for f in factorList:
+    #     print(f)
+    #     print('x\n')
+
+    # multiply remaining factors
     product = _multiplyList(factorList)
+
+    # print(product)
+
+    # normalize and return
     return normalize(product)
 
 ####### Tests for restrict
@@ -97,8 +191,38 @@ def inference(factorList, queryVariables, orderedListOfHiddenVariables, evidence
 # print(factor)
 # print(sumout(factor, 0))
 
-# ####### Tests for normalize
-#
+####### Tests for normalize
+
 # factor = np.arange(8, dtype=np.float64).reshape(2,2,2)
 # print(factor)
 # print(normalize(factor))
+
+####### Tests for inference
+
+f1 = np.array([0.1, 0.9]).reshape(2,1,1)
+f2 = np.array([[0.6, 0.4], [0.1, 0.9]]).reshape(2,2,1)
+f3 = np.array([[0.8, 0.2], [0.3, 0.7]]).reshape(1,2,2)
+#
+# f4 = restrict(f3, 2, 1)
+# # print(f4.shape)
+# # print(f4)
+# _f4 = multiply(f2, f4)
+#
+# f5 = sumout(_f4, 1)
+# print(f5)
+# print(f5.shape)
+#
+# f6 = multiply(f1, f5)
+# print(f6)
+# print(normalize(f6))
+# print(normalize(f6).shape)
+
+result = inference([f1,f2,f3], [0], [1], [-1,-1,1])
+print("result:")
+print(result)
+
+# y1 = np.array([[1, 2], [1, 3], [1, 2], [2, 2]])
+# y2 = np.array([[100, 200], [100,300], [100, 200], [200, 200]])
+# z = np.array([1, 2])
+# print((y1 == z).all(1).any())
+# print((y2 == z).all(1).any())
