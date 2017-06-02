@@ -35,67 +35,14 @@ def _multiplyList(factorList):
     else:
         return multiply(factorList[0], factorList[1:])
 
-# def inference(factorList, queryVariables, orderedListOfHiddenVariables, evidenceList):
-    # for idx,evidence in enumerate(evidenceList):
-    #     if evidence == -1:
-    #         continue
-    #     # find factors that are influenced by evidence
-    #     factorsUsingEvidence = []
-    #     for factor in factorList:
-    #         shape = factor.shape
-    #         if shape[idx] > 1:
-    #             factorsUsingEvidence.append(factor)
-    #     # for
-    #     # print(factorList)
-    #     # print(factorsUsingEvidence)
-    #     factorList = [f for f in factorList if not (f == factorsUsingEvidence).all()]
-    #     for factor in factorsUsingEvidence:
-    #         factor = restrict(factor, idx, evidence)
-    #         factorList.append(factor)
-    #     # for
-    # # for
-    #
-    # for var in orderedListOfHiddenVariables:
-    #     # multiply all factors that have var in them
-    #     factorsToMultiply = []
-    #     for factor in factorList:
-    #         if factor.shape[var] > 1:
-    #             factorsToMultiply.append(factor)
-    #     # for
-    #     # print(factorList)
-    #     # f = factorList[0]
-    #     # print(f)
-    #     # print(factorsToMultiply)
-    #     # print((f == factorsToMultiply))
-    #
-    #     factorList = [f for f in factorList if not (f == factorsToMultiply)]
-    #     product = _multiplyList(factorsToMultiply)
-    #     summed = sumout(product, var)
-    #     factorList.append(summed)
-    # # for
-    #
-    # product = _multiplyList(factorList)
-    # print(product)
-    # return normalize(product)
-
 def _inArray(factorList, factor):
-    # print(factor)
-    # print('B')
     for i,f in enumerate(factorList):
-        # print(f)
-        # print(i,'AA')
         if (f == factor).all():
-            # print("found")
             return True
     # for
-    # print("notfound")
     return False
 
 def inference(factorList, queryVariables, orderedListOfHiddenVariables, evidenceList):
-    # for f in factorList:
-    #     print(f)
-    #     print('ZZ\n')
-
     # call restrict on all factors that contain any of the variables in the evidence
     for idx,evidence in enumerate(evidenceList):
         if evidence == -1:
@@ -109,30 +56,14 @@ def inference(factorList, queryVariables, orderedListOfHiddenVariables, evidence
         # for
     # for
 
-    # for f in factorList:
-    #     print(f)
-    #     print('ZZ\n')
-
     # for each hidden variable, create a new factor by multiplying factors that contain hidden variable
     for var in orderedListOfHiddenVariables:
         factorsToMultiply = []
         for factor in factorList:
             if factor.shape[var] > 1:
                 factorsToMultiply.append(factor)
-        # for
-        # for f in factorsToMultiply:
-        #     print(f)
-        #     print('x')
-        #
-        # for f in factorList:
-        #     print(f)
-        #     print('Y')
 
-        # problem: doesn't keep f1(A)
         factorList = [f for f in factorList if not _inArray(factorsToMultiply, f)]
-        # for f in factorList:
-        #     print(f)
-        #     print('NNNN\n')
 
         product = _multiplyList(factorsToMultiply)
 
@@ -141,14 +72,8 @@ def inference(factorList, queryVariables, orderedListOfHiddenVariables, evidence
         factorList.append(summed)
     # for
 
-    # for f in factorList:
-    #     print(f)
-    #     print('x\n')
-
     # multiply remaining factors
     product = _multiplyList(factorList)
-
-    # print(product)
 
     # normalize and return
     return normalize(product)
